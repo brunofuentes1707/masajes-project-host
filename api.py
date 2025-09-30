@@ -1,4 +1,4 @@
-# api.py - VERSIÓN FINAL CON TODAS LAS CORRECCIONES DE INDENTACIÓN Y CONFIGURACIÓN
+
 
 import os
 from flask import Flask, jsonify, request, render_template
@@ -6,11 +6,9 @@ from flask_cors import CORS
 from flask_mail import Mail, Message
 
 app = Flask(__name__)
-
-# Configuración de CORS específica para tu frontend
 CORS(app, resources={r"/api/*": {"origins": "https://masajes-web.onrender.com"}})
 
-# --- CONFIGURACIÓN PARA FLASK-MAIL (CORREGIDA PARA RENDER) ---
+# --- CONFIGURACIÓN PARA FLASK-MAIL (CORREGIDA PARA EVITAR TIMEOUT EN RENDER) ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465  # Usamos el puerto SSL
 app.config['MAIL_USE_SSL'] = True # Activamos SSL
@@ -30,12 +28,10 @@ services_data = [
 
 @app.route('/api/services', methods=['GET'])
 def get_services():
-    # INDENTACIÓN CORREGIDA AQUÍ
     return jsonify(services_data)
 
 @app.route('/api/book', methods=['POST'])
 def create_booking():
-    # INDENTACIÓN CORREGIDA EN TODO ESTE BLOQUE
     booking_data = request.json
     print(f"--- NUEVA RESERVA RECIBIDA: {booking_data} ---")
 
@@ -72,14 +68,4 @@ def create_booking():
                 sender=sender_email
             )
             mail.send(msg_owner)
-            print(f"--- Correo de notificación enviado a {owner_email} ---")
-        
-        return jsonify({"message": "Reserva recibida y correos de confirmación enviados."}), 201
-
-    except Exception as e:
-        print(f"--- ERROR AL ENVIAR CORREO: {e} ---")
-        return jsonify({"message": "Reserva recibida, pero hubo un error al enviar el correo de confirmación."}), 500
-
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+            print(f"--- Correo de n
