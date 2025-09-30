@@ -1,25 +1,18 @@
-# api.py - VERSIÓN FINAL Y COMPLETA
+# api.py - VERSIÓN FINAL CON SENDGRID
 
 import os
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
-from flask_mail import Mail, Message
+# [NUEVO] Imports para SendGrid
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "*"}}) # Dejamos CORS abierto por ahora
 
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+# --- YA NO NECESITAMOS LA CONFIGURACIÓN DE FLASK-MAIL ---
 
-
-# --- CONFIGURACIÓN PARA FLASK-MAIL ---
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
-app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
-
-mail = Mail(app)
-
-# Tus datos de servicios
+# Tus datos de servicios (sin cambios)
 services_data = [
     { "id": 1, "name": "Masaje en Camilla", "duration": "15 min", "price": "$15.000", "description": "Relajación profunda con aceites esenciales.", "note": "Dependiendo el tipo de masaje", "image": "https://images.pexels.com/photos/3997996/pexels-photo-3997996.jpeg" },
     { "id": 2, "name": "Masaje en Silla Ergonómica", "duration": "15 min", "price": "$13.000", "description": "Alivio rápido de tensiones.", "note": None, "image": "https://images.pexels.com/photos/7176026/pexels-photo-7176026.jpeg" },
@@ -46,35 +39,39 @@ def create_booking():
     full_booking_details = {**service_details, **booking_data}
 
     try:
-        sender_email = os.environ.get('EMAIL_USER')
+        # --- [NUEVO] Lógica de envío con SendGrid ---
+        from_email = 'brunofuentes1707@gmail.com' # El email que verificaste en SendGrid
         
         # Correo para el cliente
         html_body_customer = render_template('booking_confirmation.html', booking=full_booking_details)
-        msg_customer = Message(
+        message_customer = Mail(
+            from_email=from_email,
+            to_emails=booking_data.get('email'),
             subject="Confirmación de tu reserva en 'Detente, Recarga y Avanza'",
-            recipients=[booking_data.get('email')],
-            html=html_body_customer,
-            sender=sender_email
+            html_content=html_body_customer
         )
-        mail.send(msg_customer)
-        print(f"--- Correo de confirmación enviado a {booking_data.get('email')} ---")
-
-        # Correo para el propietario
-        if sender_email:
-            html_body_owner = render_template('new_booking_notification.html', booking=full_booking_details)
-            msg_owner = Message(
-                subject=f"¡Nueva Reserva! - {booking_data.get('name')} para {service_name}",
-                recipients=[sender_email],
-                html=html_body_owner,
-                sender=sender_email
-            )
-            mail.send(msg_owner)
-            print(f"--- Correo de notificación enviado a {sender_email} ---")
         
+        # Correo para el propietario
+        html_body_owner = render_template('new_booking_notification.html', booking=full_booking_details)
+        message_owner = Mail(
+            from_email=from_email,
+            to_emails=from_email, # A tu propio correo
+            subject=f"¡Nueva Reserva! - {booking_data.get('name')} para {service_name}",
+            html_content=html_body_owner
+        )
+
+        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+        sg.send(message_customer)
+        sg.send(message_owner)
+        
+        print(f"--- Correos enviados exitosamente a través de SendGrid ---")
         return jsonify({"message": "Reserva recibida y correos de confirmación enviados."}), 201
         
     except Exception as e:
-        print(f"--- ERROR AL ENVIAR CORREO: {e} ---")
+        print(f"--- ERROR AL ENVIAR CORREO CON SENDGRID: {e} ---")
+        # Imprime el cuerpo del error si está disponible para más detalles
+        if hasattr(e, 'body'):
+            print(e.body)
         return jsonify({"message": "Reserva recibida, pero hubo un error al enviar el correo."}), 500
 
 if __name__ == '__main__':
