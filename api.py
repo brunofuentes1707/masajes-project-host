@@ -30,7 +30,7 @@ services_data = [
 
 @app.route('/api/services', methods=['GET'])
 def get_services():
-return jsonify(services_data)
+  return jsonify(services_data)
 
 # --- [MODIFICADO] RUTA DE RESERVA PARA ENVIAR CORREO ---
 # En api.py, reemplaza solo esta función
