@@ -16,9 +16,9 @@ CORS(app, resources={r"/api/*": {"origins": "*"}}) # Dejamos CORS abierto por ah
 services_data = [
     { "id": 1, "name": "Masaje en Camilla", "duration": "15 min", "price": "$15.000", "description": "Relajación profunda con aceites esenciales.", "note": "Dependiendo el tipo de masaje", "image": "https://images.pexels.com/photos/3997996/pexels-photo-3997996.jpeg" },
     { "id": 2, "name": "Masaje en Silla Ergonómica", "duration": "15 min", "price": "$13.000", "description": "Alivio rápido de tensiones.", "note": None, "image": "https://images.pexels.com/photos/7176026/pexels-photo-7176026.jpeg" },
-    { "id": 3, "name": "Masaje Descontracturante", "duration": "60 min", "price": "$15.000", "description": "Técnicas para liberar contracturas.", "note": None, "image": "https://images.pexels.com/photos/3757942/pexels-photo-3757942.jpeg" },
-    { "id": 4, "name": "Masaje Relajante", "duration": "60 min", "price": "$13.000", "description": "Movimientos suaves para calma profunda.", "note": None, "image": "https://images.pexels.com/photos/3865676/pexels-photo-3865676.jpeg" },
-    { "id": 5, "name": "Masaje Drenaje Linfático", "duration": "45 min", "price": "$13.000", "description": "Técnica para eliminar toxinas.", "note": None, "image": "https://images.pexels.com/photos/6663461/pexels-photo-6663461.jpeg" }
+    { "id": 3, "name": "Masaje Descontracturante", "duration": "30 min", "price": "$15.000", "description": "Técnicas para liberar contracturas.", "note": None, "image": "https://images.pexels.com/photos/3757942/pexels-photo-3757942.jpeg" },
+    { "id": 4, "name": "Masaje Relajante", "duration": "20 min", "price": "$13.000", "description": "Movimientos suaves para calma profunda.", "note": None, "image": "https://images.pexels.com/photos/3865676/pexels-photo-3865676.jpeg" },
+    { "id": 5, "name": "Masaje Drenaje Linfático", "duration": "25 min", "price": "$13.000", "description": "Técnica para eliminar toxinas.", "note": None, "image": "https://images.pexels.com/photos/6663461/pexels-photo-6663461.jpeg" }
 ]
 
 @app.route('/api/services', methods=['GET'])
