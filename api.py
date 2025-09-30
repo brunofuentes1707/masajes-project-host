@@ -1,4 +1,4 @@
-
+# api.py - VERSIÓN FINAL Y COMPLETA CON TODAS LAS CORRECCIONES
 
 import os
 from flask import Flask, jsonify, request, render_template
@@ -6,6 +6,10 @@ from flask_cors import CORS
 from flask_mail import Mail, Message
 
 app = Flask(__name__)
+
+# --- [LA CORRECCIÓN MÁS IMPORTANTE] ---
+# Esta línea le da permiso explícito a tu frontend para hablar con este backend.
+# Asegúrate de que no haya ningún error de tipeo en la URL.
 CORS(app, resources={r"/api/*": {"origins": "https://masajes-web.onrender.com"}})
 
 # --- CONFIGURACIÓN PARA FLASK-MAIL (CORREGIDA PARA EVITAR TIMEOUT EN RENDER) ---
@@ -68,4 +72,14 @@ def create_booking():
                 sender=sender_email
             )
             mail.send(msg_owner)
-            print(f"--- Correo de n
+            print(f"--- Correo de notificación enviado a {owner_email} ---")
+        
+        return jsonify({"message": "Reserva recibida y correos de confirmación enviados."}), 201
+
+    except Exception as e:
+        print(f"--- ERROR AL ENVIAR CORREO: {e} ---")
+        return jsonify({"message": "Reserva recibida, pero hubo un error al enviar el correo de confirmación."}), 500
+
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
