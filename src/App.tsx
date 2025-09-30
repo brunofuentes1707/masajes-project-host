@@ -109,7 +109,7 @@ function App() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <button onClick={() => scrollToSection('hero')} className="focus:outline-none">
-              <img src="/DRA2.png" alt="Logo Detente, Recarga y Avanza" className="h-32 w-auto" />
+              <img src="/DRA3.png" alt="Logo Detente, Recarga y Avanza" className="h-32 w-auto" />
             </button>
             <div className="hidden md:flex space-x-8">
               <button onClick={() => scrollToSection('services')} className="text-gray-700 hover:text-[#e86b4f] transition font-medium">Servicios</button>
