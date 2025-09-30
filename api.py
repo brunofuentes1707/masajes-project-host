@@ -1,78 +1,89 @@
-# api.py - VERSIÓN FINAL CON SENDGRID
+# api.py
 
 import os
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
-# [NUEVO] Imports para SendGrid
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}}) # Dejamos CORS abierto por ahora
+CORS(app, resources={r"/api/*": {"origins": "https://masajes-web.onrender.com"}})
+CORS(app)
 
-# --- YA NO NECESITAMOS LA CONFIGURACIÓN DE FLASK-MAIL ---
+# --- CONFIGURACIÓN PARA FLASK-MAIL ---
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
+app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('EMAIL_USER')
+
+mail = Mail(app)
 
 # Tus datos de servicios (sin cambios)
 services_data = [
-    { "id": 1, "name": "Masaje en Camilla", "duration": "15 min", "price": "$15.000", "description": "Relajación profunda con aceites esenciales.", "note": "Dependiendo el tipo de masaje", "image": "https://images.pexels.com/photos/3997996/pexels-photo-3997996.jpeg" },
-    { "id": 2, "name": "Masaje en Silla Ergonómica", "duration": "15 min", "price": "$13.000", "description": "Alivio rápido de tensiones.", "note": None, "image": "https://images.pexels.com/photos/7176026/pexels-photo-7176026.jpeg" },
-    { "id": 3, "name": "Masaje Descontracturante", "duration": "30 min", "price": "$15.000", "description": "Técnicas para liberar contracturas.", "note": None, "image": "https://images.pexels.com/photos/3757942/pexels-photo-3757942.jpeg" },
-    { "id": 4, "name": "Masaje Relajante", "duration": "20 min", "price": "$13.000", "description": "Movimientos suaves para calma profunda.", "note": None, "image": "https://images.pexels.com/photos/3865676/pexels-photo-3865676.jpeg" },
-    { "id": 5, "name": "Masaje Drenaje Linfático", "duration": "25 min", "price": "$13.000", "description": "Técnica para eliminar toxinas.", "note": None, "image": "https://images.pexels.com/photos/6663461/pexels-photo-6663461.jpeg" }
+{ "id": 1, "name": "Masaje en Camilla", "duration": "15 min", "price": "$15.000", "description": "Relajación profunda con aceites esenciales.", "note": "Dependiendo el tipo de masaje", "image": "https://images.pexels.com/photos/3997996/pexels-photo-3997996.jpeg" },
+{ "id": 2, "name": "Masaje en Silla Ergonómica", "duration": "15 min", "price": "$13.000", "description": "Alivio rápido de tensiones.", "note": None, "image": "https://images.pexels.com/photos/7176026/pexels-photo-7176026.jpeg" },
+{ "id": 3, "name": "Masaje Descontracturante", "duration": "30 min", "price": "$15.000", "description": "Técnicas para liberar contracturas.", "note": None, "image": "https://images.pexels.com/photos/3757942/pexels-photo-3757942.jpeg" },
+{ "id": 4, "name": "Masaje Relajante", "duration": "20 min", "price": "$13.000", "description": "Movimientos suaves para calma profunda.", "note": None, "image": "https://images.pexels.com/photos/3865676/pexels-photo-3865676.jpeg" },
+{ "id": 5, "name": "Masaje Drenaje Linfático", "duration": "20 min", "price": "$13.000", "description": "Técnica para eliminar toxinas.", "note": None, "image": "https://images.pexels.com/photos/6663461/pexels-photo-6663461.jpeg" }
 ]
 
 @app.route('/api/services', methods=['GET'])
 def get_services():
-    return jsonify(services_data)
+return jsonify(services_data)
+
+# --- [MODIFICADO] RUTA DE RESERVA PARA ENVIAR CORREO ---
+# En api.py, reemplaza solo esta función
 
 @app.route('/api/book', methods=['POST'])
 def create_booking():
-    booking_data = request.json
-    print(f"--- NUEVA RESERVA RECIBIDA: {booking_data} ---")
+booking_data = request.json
+print(f"--- NUEVA RESERVA RECIBIDA: {booking_data} ---")
 
-    service_name = booking_data.get('service')
-    service_details = next((s for s in services_data if s['name'] == service_name), None)
+# --- [NUEVO] Buscar los detalles completos del servicio reservado ---
+service_name = booking_data.get('service')
+service_details = next((s for s in services_data if s['name'] == service_name), None)
 
-    if not service_details:
-        return jsonify({"message": "El servicio seleccionado no es válido."}), 400
+# Si no encontramos el servicio por alguna razón, manejamos el caso
+if not service_details:
+return jsonify({"message": "El servicio seleccionado no es válido."}), 400
 
-    full_booking_details = {**service_details, **booking_data}
+# Combinamos los datos del formulario con los detalles del servicio
+full_booking_details = {**service_details, **booking_data}
+# --- FIN DE LA MEJORA ---
 
-    try:
-        # --- [NUEVO] Lógica de envío con SendGrid ---
-        from_email = 'brunofuentes1707@gmail.com' # El email que verificaste en SendGrid
-        
-        # Correo para el cliente
-        html_body_customer = render_template('booking_confirmation.html', booking=full_booking_details)
-        message_customer = Mail(
-            from_email=from_email,
-            to_emails=booking_data.get('email'),
-            subject="Confirmación de tu reserva en 'Detente, Recarga y Avanza'",
-            html_content=html_body_customer
-        )
-        
-        # Correo para el propietario
-        html_body_owner = render_template('new_booking_notification.html', booking=full_booking_details)
-        message_owner = Mail(
-            from_email=from_email,
-            to_emails=from_email, # A tu propio correo
-            subject=f"¡Nueva Reserva! - {booking_data.get('name')} para {service_name}",
-            html_content=html_body_owner
-        )
+try:
+# --- 1. Enviar correo de confirmación al CLIENTE ---
+html_body_customer = render_template('booking_confirmation.html', booking=full_booking_details)
+msg_customer = Message(
+subject="Confirmación de tu reserva en 'Detente, Recarga y Avanza'",
+recipients=[booking_data.get('email')],
+html=html_body_customer,
+sender=os.environ.get('EMAIL_USER')
+)
+mail.send(msg_customer)
+print(f"--- Correo de confirmación enviado a {booking_data.get('email')} ---")
 
-        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
-        sg.send(message_customer)
-        sg.send(message_owner)
-        
-        print(f"--- Correos enviados exitosamente a través de SendGrid ---")
-        return jsonify({"message": "Reserva recibida y correos de confirmación enviados."}), 201
-        
-    except Exception as e:
-        print(f"--- ERROR AL ENVIAR CORREO CON SENDGRID: {e} ---")
-        # Imprime el cuerpo del error si está disponible para más detalles
-        if hasattr(e, 'body'):
-            print(e.body)
-        return jsonify({"message": "Reserva recibida, pero hubo un error al enviar el correo."}), 500
+# --- 2. Enviar correo de notificación al PROPIETARIO ---
+owner_email = os.environ.get('EMAIL_USER')
+if owner_email:
+# [MODIFICADO] También pasamos los detalles completos al correo de notificación
+html_body_owner = render_template('booking_confirmation.html', booking=full_booking_details)
+msg_owner = Message(
+subject=f"¡Nueva Reserva! - {booking_data.get('name')} para {service_name}",
+recipients=[owner_email],
+html=html_body_owner,
+sender=os.environ.get('EMAIL_USER')
+)
+mail.send(msg_owner)
+print(f"--- Correo de notificación enviado a {owner_email} ---")
+
+return jsonify({"message": "Reserva recibida y correos de confirmación enviados."}), 201
+
+except Exception as e:
+print(f"--- ERROR AL ENVIAR CORREO: {e} ---")
+return jsonify({"message": "Reserva recibida, pero hubo un error al enviar el correo de confirmación."}), 500
+
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+app.run(debug=True, port=5000)
