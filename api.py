@@ -6,7 +6,7 @@ from flask_cors import CORS
 from flask_mail import Mail, Message
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "https://masajes-web.onrender.com"}})
 
 # --- CONFIGURACIÓN PARA FLASK-MAIL ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -37,13 +37,10 @@ def get_services():
 @app.route('/api/book', methods=['POST'])
 def create_booking():
     booking_data = request.json
-    
-    print("--- NUEVA RESERVA RECIBIDA ---")
-    print(f"Datos: {booking_data}")
+    print(f"--- NUEVA RESERVA RECIBIDA: {booking_data} ---")
 
     # --- [NUEVO] Buscar los detalles completos del servicio reservado ---
     service_name = booking_data.get('service')
-    # Usamos next() para encontrar el primer servicio que coincida con el nombre
     service_details = next((s for s in services_data if s['name'] == service_name), None)
 
     # Si no encontramos el servicio por alguna razón, manejamos el caso
@@ -56,12 +53,12 @@ def create_booking():
 
     try:
         # --- 1. Enviar correo de confirmación al CLIENTE ---
-        # [MODIFICADO] Pasamos el diccionario completo con todos los detalles
         html_body_customer = render_template('booking_confirmation.html', booking=full_booking_details)
         msg_customer = Message(
             subject="Confirmación de tu reserva en 'Detente, Recarga y Avanza'",
             recipients=[booking_data.get('email')],
-            html=html_body_customer
+            html=html_body_customer,
+            sender=os.environ.get('EMAIL_USER')
         )
         mail.send(msg_customer)
         print(f"--- Correo de confirmación enviado a {booking_data.get('email')} ---")
@@ -74,7 +71,8 @@ def create_booking():
             msg_owner = Message(
                 subject=f"¡Nueva Reserva! - {booking_data.get('name')} para {service_name}",
                 recipients=[owner_email],
-                html=html_body_owner
+                html=html_body_owner,
+                sender=os.environ.get('EMAIL_USER')
             )
             mail.send(msg_owner)
             print(f"--- Correo de notificación enviado a {owner_email} ---")
