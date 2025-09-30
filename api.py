@@ -6,7 +6,7 @@ from flask_cors import CORS
 from flask_mail import Mail, Message
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "https://masajes-web.onrender.com"}})
+CORS(app)
 
 # --- CONFIGURACIÓN PARA FLASK-MAIL ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
