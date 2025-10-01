@@ -10,7 +10,7 @@ app = Flask(__name__)
 # --- [LA CORRECCIÓN MÁS IMPORTANTE] ---
 # Esta línea le da permiso explícito a tu frontend para hablar con este backend.
 # Asegúrate de que no haya ningún error de tipeo en la URL.
-CORS(app, resources={r"/api/*": {"origins": "https://masajes-web.onrender.com"}})
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # --- CONFIGURACIÓN PARA FLASK-MAIL (CORREGIDA PARA EVITAR TIMEOUT EN RENDER) ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
